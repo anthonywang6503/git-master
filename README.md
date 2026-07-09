@@ -26,6 +26,13 @@ English | [简体中文](./README.zh-CN.md)
 - Code Snippet
 - Browse the history of files (GitHub && GitLab)
 
+## Project Status
+
+- Current version: `1.18.0`
+- Chrome builds use Manifest V3 and require Chrome 88 or newer.
+- Firefox builds continue to use Manifest V2.
+- Local build outputs are written to `extension/chrome`, `extension/firefox`, and browser-specific archive files under `extension/`.
+
 ## Usage
 
 By default, the extension only loads on domains below. You can manually enable the extension for your custom domain by clicking the extension icon and choosing Enable xxx.
