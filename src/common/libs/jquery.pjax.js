@@ -6,6 +6,18 @@
  */
 
 (function($) {
+  function isFunction(value) {
+    return typeof value === 'function';
+  }
+
+  function getType(value) {
+    if (value == null) return String(value);
+    return Object.prototype.toString
+      .call(value)
+      .slice(8, -1)
+      .toLowerCase();
+  }
+
   // When called on a container with a selector, fetches the href with
   // ajax into the container or with the data-pjax attribute on the link
   // itself.
@@ -160,13 +172,13 @@
   function pjax(options) {
     options = $.extend(true, {}, $.ajaxSettings, pjax.defaults, options);
 
-    if ($.isFunction(options.url)) {
+    if (isFunction(options.url)) {
       options.url = options.url();
     }
 
     var hash = parseURL(options.url).hash;
 
-    var containerType = $.type(options.container);
+    var containerType = getType(options.container);
     if (containerType !== 'string') {
       throw "expected string value for 'container' option; got " + containerType;
     }
@@ -180,7 +192,7 @@
     // Without adding this secret parameter, some browsers will often
     // confuse the two.
     if (!options.data) options.data = {};
-    if ($.isArray(options.data)) {
+    if (Array.isArray(options.data)) {
       options.data.push({ name: '_pjax', value: options.container });
     } else {
       options.data._pjax = options.container;
@@ -497,7 +509,7 @@
   //
   // Returns nothing since it retriggers a hard form submission.
   function fallbackPjax(options) {
-    var url = $.isFunction(options.url) ? options.url() : options.url,
+    var url = isFunction(options.url) ? options.url() : options.url,
       method = options.type ? options.type.toUpperCase() : 'GET';
 
     var form = $('<form>', {
@@ -522,7 +534,7 @@
         var pair = value.split('=');
         form.append($('<input>', { type: 'hidden', name: pair[0], value: pair[1] }));
       });
-    } else if ($.isArray(data)) {
+    } else if (Array.isArray(data)) {
       $.each(data, function(index, value) {
         form.append($('<input>', { type: 'hidden', name: value.name, value: value.value }));
       });
@@ -713,7 +725,7 @@
     }
 
     // Trim any whitespace off the title
-    if (obj.title) obj.title = $.trim(obj.title);
+    if (obj.title) obj.title = String(obj.title).trim();
 
     return obj;
   }

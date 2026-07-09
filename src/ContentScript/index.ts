@@ -1,4 +1,4 @@
-import 'jquery';
+import '../common/libs/jquery-compat';
 import 'jquery-ui/ui/widgets/resizable';
 import 'whatwg-fetch';
 import '../common/styles/main.less';
@@ -38,7 +38,6 @@ async function loadNow() {
     } else {
       // use github dark mode
       // only enable sidebar dark mode
-      // eslint-disable-next-line no-lonely-if
       if (githubIsDark || inSystemDarkMode()) {
         $('html').addClass(shareClassName.sidebarDarkCls);
       }
