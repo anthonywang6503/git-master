@@ -5,18 +5,14 @@
 安装依赖。
 
 ```bash
-$ yarn
-
-# or use yarn
-
-$ npm i
+$ pnpm install
 ```
 
 ## 开发模式
 
 ```bash
 # Chrome、Edge
-$ npm run dev:chrome
+$ pnpm run dev:chrome
 ```
 
 ### 加载扩展
@@ -32,7 +28,7 @@ $ npm run dev:chrome
 
 ```bash
 # Chrome、Edge
-$ npm run build:chrome
+$ pnpm run build:chrome
 ```
 
 ## 测试
@@ -155,5 +151,5 @@ none
 ## 发布
 
 ```bash
-$ npm run release
+$ pnpm run release
 ```

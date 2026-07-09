@@ -5,18 +5,14 @@
 Install dependencies after git clone the repo.
 
 ```bash
-$ yarn
-
-# or use yarn
-
-$ npm i
+$ pnpm install
 ```
 
 ## Development
 
 ```bash
 # Chrome、Edge
-$ npm run dev:chrome
+$ pnpm run dev:chrome
 ```
 
 ### Load Extension
@@ -31,7 +27,7 @@ $ npm run dev:chrome
 
 ```bash
 # Chrome、Edge
-$ npm run build:chrome
+$ pnpm run build:chrome
 ```
 
 ## Test
@@ -160,5 +156,5 @@ Use the summary field to provide a succinct description of the change:
 ## Release
 
 ```bash
-$ npm run release
+$ pnpm run release
 ```

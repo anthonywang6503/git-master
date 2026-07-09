@@ -24,30 +24,24 @@ Git Master 是瀏覽器擴充套件，提供 GitHub、GitLab、Gitee、Gitea、G
 
 ## 設定指令
 
-優先使用專案既有 Node/npm 工具鏈。`package.json` 宣告 Node `>=10`，但此舊 Webpack 4 專案在新版 npm/Node 上可能遇到 peer dependency 或 `@types/node` 版本問題。
+優先使用專案既有 Node/pnpm 工具鏈。`package.json` 宣告 Node `>=10`，並透過 `packageManager` 指定 pnpm。
 
 一般安裝：
 
 ```bash
-npm install --legacy-peer-deps
+pnpm install
 ```
 
-若 `package-lock.json` 內舊的 `registry.nlark.com` resolved URL 造成安裝失敗，可使用 npm registry 並避免重寫 lockfile：
+若 TypeScript 4.6 因新版 `@types/node` 解析失敗，只調整本機 `node_modules`，不要改 `package.json` 或 `pnpm-lock.yaml`：
 
 ```bash
-npm install --no-package-lock --legacy-peer-deps --registry=https://registry.npmjs.org/
-```
-
-若 TypeScript 4.6 因新版 `@types/node` 解析失敗，只調整本機 `node_modules`，不要改 `package.json` 或 `package-lock.json`：
-
-```bash
-npm install --no-save --package-lock=false --legacy-peer-deps --registry=https://registry.npmjs.org/ @types/node@16.11.7
+pnpm add -D @types/node@16.11.7
 ```
 
 pre-commit hook 需要 `magic-lint` 能找到 `prettier` 與 `lint-staged`。若本機安裝不完整，補齊本機套件即可：
 
 ```bash
-npm install --no-save --package-lock=false --legacy-peer-deps --registry=https://registry.npmjs.org/ prettier@1.19.1 lint-staged@10.0.8
+pnpm add -D prettier@1.19.1 lint-staged@10.0.8
 ```
 
 ## 開發工作流程
@@ -55,27 +49,35 @@ npm install --no-save --package-lock=false --legacy-peer-deps --registry=https:/
 開發監看：
 
 ```bash
-npm run dev:chrome
-npm run dev:firefox
-npm run dev:opera
+pnpm run dev:chrome
+pnpm run dev:firefox
+pnpm run dev:opera
 ```
 
 建置：
 
 ```bash
-npm run build:chrome
-npm run build:firefox
-npm run build:opera
-npm run build:safari
+pnpm run build:chrome
+pnpm run build:firefox
+pnpm run build:opera
+pnpm run build:safari
 ```
 
 完整建置腳本：
 
 ```bash
-npm run build
+pnpm run build
 ```
 
-注意：`npm run build` 目前呼叫 `yarn run build:chrome && yarn run build:firefox && yarn run build:opera`，本機若沒有 Yarn，請分別執行單一 browser build。
+清理建置輸出：
+
+```bash
+pnpm run clean
+pnpm run clean:chrome
+pnpm run clean:firefox
+pnpm run clean:opera
+pnpm run clean:safari
+```
 
 建置輸出：
 
@@ -87,13 +89,13 @@ npm run build
 修改 manifest 後至少跑：
 
 ```bash
-npm run build:chrome
+pnpm run build:chrome
 ```
 
 若有動到 vendor key、Firefox 專屬欄位或 background script，相同變更也要跑：
 
 ```bash
-npm run build:firefox
+pnpm run build:firefox
 ```
 
 ## 測試與驗證
@@ -103,7 +105,7 @@ npm run build:firefox
 Lint 指令：
 
 ```bash
-npm run lint
+pnpm run lint
 ```
 
 注意：目前 full lint 基線不是乾淨的，會回報既有 TypeScript 規則錯誤。除非任務明確要求清理 lint，請不要順手修正無關檔案；針對你修改的原始碼，依 pre-commit hook 或目標檔案的 lint 結果處理即可。
@@ -111,13 +113,13 @@ npm run lint
 建置驗證：
 
 ```bash
-npm run build:chrome
-npm run build:firefox
+pnpm run build:chrome
+pnpm run build:firefox
 ```
 
 Chrome 手動驗證：
 
-1. 執行 `npm run build:chrome`。
+1. 執行 `pnpm run build:chrome`。
 2. 到 `chrome://extensions` 開啟開發人員模式。
 3. 載入 `extension/chrome`。
 4. 重新載入擴充後，也要重新整理已開啟的目標網頁，避免頁面仍使用舊版 content script。
@@ -162,13 +164,13 @@ node -e "const m=require('./extension/chrome/manifest.json'); console.log(m.vers
 - 提交前至少檢查目標瀏覽器建置：
 
 ```bash
-npm run build:chrome
+pnpm run build:chrome
 ```
 
 - 若變更影響 Firefox manifest 或 background script，另跑：
 
 ```bash
-npm run build:firefox
+pnpm run build:firefox
 ```
 
 - 若修改 TypeScript/JavaScript 原始碼，讓 Husky pre-commit hook 執行 `magic-lint` / lint-staged，並修正 hook 指出的相關檔案問題。不要用 `--no-verify` 跳過 hook，除非使用者明確要求。
@@ -176,9 +178,9 @@ npm run build:firefox
 ## CI/CD 與發布
 
 - `.github/workflows/main.yml` 只做 GitHub 到 Gitee 的鏡像同步，不執行測試或建置。
-- `npm run release` 使用 `semantic-release`。
+- `pnpm run release` 使用 `semantic-release`。
 - 版本來源在 `package.json`，manifest 會讀取 `pkg.version`。
-- 發版時同步更新 `package.json`、`package-lock.json`、`CHANGELOG.md`，必要時更新 `README.md`。
+- 發版時同步更新 `package.json`、`pnpm-lock.yaml`、`CHANGELOG.md`，必要時更新 `README.md`。
 
 ## 安全與權限
 
@@ -189,8 +191,7 @@ npm run build:firefox
 
 ## 常見陷阱
 
-- `package-lock.json` 含舊 registry resolved URL；不要只因本機安裝問題大幅重寫 lockfile。
-- 新版 npm 可能因 peer dependency 失敗，使用 `--legacy-peer-deps`。
+- `pnpm-lock.yaml` 是相依版本來源；不要只因本機安裝問題大幅重寫 lockfile。
 - 新版 `@types/node` 可能讓 TypeScript 4.6 build 失敗；只修本機 `node_modules` 即可。
 - `clean-webpack-plugin` 會清掉目標 browser 的 `extension/<browser>` 與 archive；不要並行跑不同 browser build。
 - 重新載入 Chrome 擴充後，已注入的頁面仍可能使用舊 content script，需重新整理頁面。
