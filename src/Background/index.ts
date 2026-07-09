@@ -1,7 +1,7 @@
 import { browser } from 'webextension-polyfill-ts';
 import delay from 'delay';
 import { MessageType } from '@/common/core.constants';
-import Analytics from '@/common/analytics';
+import getExtensionAction from '@/common/extension-action';
 import optionsStorage from './options-storage';
 import localStore from './lib/local-store';
 import { openTab } from './lib/tabs-service';
@@ -13,18 +13,6 @@ import { isChrome, isNotificationTargetPage } from './util';
 
 let currentUrl = '';
 let tabId: number;
-
-const ga = new Analytics('UA-39288503-7', process.env.TARGET_BROWSER === 'firefox');
-ga.initialize();
-
-browser.runtime.onInstalled.addListener((details): void => {
-  const manifest = browser.runtime.getManifest();
-  if (details.reason === 'install') {
-    ga.sendEvent(ga.event.INSTALLED, 'installed', manifest.version);
-  } else if (details.reason === 'update') {
-    ga.sendEvent(ga.event.UPDATED, 'updated', `${details.previousVersion}=>${manifest.version}`);
-  }
-});
 
 async function scheduleNextAlarm(interval?: number) {
   const intervalSetting = (await localStore.get('interval')) || 60;
@@ -173,14 +161,13 @@ async function onMessage(message: { type: String; data?: any; tabId?: number }) 
     // eslint-disable-next-line no-use-before-define
     await initNotice(statusChanged, message.data?.updated?.noticeOpen);
   } else if (message.type === 'report') {
-    // report to ga
-    ga.sendEvent(message.data);
+    return;
   }
 }
 
 export function initGitHubNotification() {
-  window.addEventListener('online', handleConnectionStatus);
-  window.addEventListener('offline', handleConnectionStatus);
+  self.addEventListener('online', handleConnectionStatus);
+  self.addEventListener('offline', handleConnectionStatus);
 
   browser.alarms.onAlarm.addListener(update);
   browser.alarms.create('notify-alarm', { when: Date.now() + 2000 });
@@ -190,12 +177,12 @@ export function initGitHubNotification() {
     browser.permissions.onAdded.addListener(addHandlers);
   }
 
-  browser.browserAction.onClicked.addListener(handleBrowserActionClick);
+  getExtensionAction().onClicked.addListener(handleBrowserActionClick);
 }
 
 export function destroyGitHubNotification() {
-  window.removeEventListener('online', handleConnectionStatus);
-  window.removeEventListener('offline', handleConnectionStatus);
+  self.removeEventListener('online', handleConnectionStatus);
+  self.removeEventListener('offline', handleConnectionStatus);
 
   browser.alarms.onAlarm.removeListener(update);
   browser.alarms.clear('notify-alarm');
@@ -205,7 +192,7 @@ export function destroyGitHubNotification() {
     browser.permissions.onAdded.removeListener(addHandlers);
   }
 
-  browser.browserAction.onClicked.removeListener(handleBrowserActionClick);
+  getExtensionAction().onClicked.removeListener(handleBrowserActionClick);
 }
 
 async function initNotice(statusChanged: boolean, noticeOpen: boolean) {

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { browser } from 'webextension-polyfill-ts';
 import { DICT, STORE } from '@/common/core.constants';
 import extStore from '@/common/core.storage';
+import getExtensionAction from '@/common/extension-action';
 import Badge from '@/components/Badge';
 import { getTabUrl } from '@/Background/lib/api';
 import { openTab } from '@/Background/lib/tabs-service';
@@ -152,7 +153,7 @@ const Popup = () => {
     setType(isGitHubActive || isGitLabActive || isGiteeActive || isGiteaActive || isGogsActive);
     setDefaultSite(isDefault);
 
-    const badgeText = await browser.browserAction.getBadgeText({
+    const badgeText = await getExtensionAction().getBadgeText({
       tabId: currentTab.id,
     });
 

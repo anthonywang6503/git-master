@@ -9,21 +9,77 @@ function _parse(val) {
   }
 }
 
+function getNativeStorage() {
+  if (typeof chrome !== 'undefined' && chrome.storage && chrome.storage.local) {
+    return chrome.storage.local;
+  }
+
+  return null;
+}
+
+function getExtensionStorage(key) {
+  const storage = getNativeStorage();
+
+  if (!storage) {
+    return browser.storage.local.get(key);
+  }
+
+  return new Promise((resolve, reject) => {
+    storage.get(key, result => {
+      const lastError = chrome.runtime.lastError;
+
+      lastError ? reject(lastError) : resolve(result);
+    });
+  });
+}
+
+function setExtensionStorage(obj) {
+  const storage = getNativeStorage();
+
+  if (!storage) {
+    return browser.storage.local.set(obj);
+  }
+
+  return new Promise((resolve, reject) => {
+    storage.set(obj, () => {
+      const lastError = chrome.runtime.lastError;
+
+      lastError ? reject(lastError) : resolve();
+    });
+  });
+}
+
+function removeExtensionStorage(key) {
+  const storage = getNativeStorage();
+
+  if (!storage) {
+    return browser.storage.local.remove(key);
+  }
+
+  return new Promise((resolve, reject) => {
+    storage.remove(key, () => {
+      const lastError = chrome.runtime.lastError;
+
+      lastError ? reject(lastError) : resolve();
+    });
+  });
+}
+
 class ExtStore {
   constructor(values, defaults) {
     this._isSafari = process.env.TARGET_BROWSER === 'safari';
 
     this._tempChanges = {};
 
-    this._setInExtensionStorage = this.storageSetWrap(browser.storage.local.set);
-    this._getInExtensionStorage = browser.storage.local.get;
-    this._removeInExtensionStorage = browser.storage.local.remove;
+    this._setInExtensionStorage = this.storageSetWrap(setExtensionStorage);
+    this._getInExtensionStorage = getExtensionStorage;
+    this._removeInExtensionStorage = removeExtensionStorage;
 
     // Initialize default values
     this._init = Promise.all(
       Object.keys(values).map(async key => {
         const existingVal = await this._innerGet(values[key]);
-        if (existingVal == null) {
+        if (existingVal === null || existingVal === undefined) {
           await this._innerSet(values[key], defaults[key]);
         }
       })
@@ -34,7 +90,7 @@ class ExtStore {
   }
 
   storageSetWrap(fn) {
-    return function(obj) {
+    return obj => {
       // eslint-disable-next-line no-async-promise-executor
       return new Promise(async resolve => {
         fn(obj).then(() => {
@@ -117,7 +173,7 @@ class ExtStore {
 
   async setIfNull(key, val) {
     const existingVal = await this.get(key);
-    if (existingVal == null) {
+    if (existingVal === null || existingVal === undefined) {
       await this.set(key, val);
     }
   }

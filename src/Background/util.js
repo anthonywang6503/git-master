@@ -10,7 +10,7 @@ export function isChrome() {
 export async function isNotificationTargetPage(url) {
   const urlObject = new URL(url);
 
-  if (urlObject.hostname !== await getHostname()) {
+  if (urlObject.hostname !== (await getHostname())) {
     return false;
   }
 
@@ -21,7 +21,8 @@ export async function isNotificationTargetPage(url) {
     return true;
   }
 
-  const repoPath = pathname.split('/')
+  const repoPath = pathname
+    .split('/')
     .slice(2)
     .join('/'); // Everything after `user/repo`
 
@@ -30,7 +31,7 @@ export async function isNotificationTargetPage(url) {
 }
 
 export function isBackgroundPage() {
-  return isExtensionContext &&
-    browser.extension.getBackgroundPage &&
-    browser.extension.getBackgroundPage() === window;
+  return (
+    isExtensionContext && browser.extension.getBackgroundPage && typeof window !== 'undefined' && browser.extension.getBackgroundPage() === window
+  );
 }

@@ -1,10 +1,11 @@
-import { browser } from 'webextension-polyfill-ts';
+import getExtensionAction from '@/common/extension-action';
 import * as defaults from './defaults';
 
 function render(text, color, title) {
-  browser.browserAction.setBadgeText({ text });
-  browser.browserAction.setBadgeBackgroundColor({ color });
-  browser.browserAction.setTitle({ title });
+  const action = getExtensionAction();
+  action.setBadgeText({ text });
+  action.setBadgeBackgroundColor({ color });
+  action.setTitle({ title });
 }
 
 function getCountString(count) {
