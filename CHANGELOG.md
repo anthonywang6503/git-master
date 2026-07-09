@@ -1,3 +1,10 @@
+## [1.18.2](https://github.com/ineo6/git-master/compare/v1.18.1...v1.18.2) (2026-07-09)
+
+
+### Bug Fixes
+
+* restore GitHub code tree navigation with jQuery 4 legacy plugin compatibility ([48b90e2](https://github.com/ineo6/git-master/commit/48b90e2))
+
 ## [1.18.1](https://github.com/ineo6/git-master/compare/v1.18.0...v1.18.1) (2026-07-09)
 
 
