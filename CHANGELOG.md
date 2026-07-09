@@ -1,17 +1,27 @@
+## [1.18.1](https://github.com/ineo6/git-master/compare/v1.18.0...v1.18.1) (2026-07-09)
+
+
+### Bug Fixes
+
+* restore extension options and popup rendering after React 19 upgrade ([4622f8e](https://github.com/ineo6/git-master/commit/4622f8e))
+* keep legacy jQuery plugins compatible with jQuery 4 ([4622f8e](https://github.com/ineo6/git-master/commit/4622f8e))
+
+
+### Build System
+
+* upgrade frontend dependencies and build tooling ([4622f8e](https://github.com/ineo6/git-master/commit/4622f8e))
+
 # [1.18.0](https://github.com/ineo6/git-master/compare/v1.17.1...v1.18.0) (2026-07-09)
 
 
 ### Bug Fixes
 
 * avoid Chrome StorageArea illegal invocation after Manifest V3 upgrade ([e99ee86](https://github.com/ineo6/git-master/commit/e99ee86))
-* restore extension options and popup rendering after React 19 upgrade
-* keep legacy jQuery plugins compatible with jQuery 4
 
 
 ### Features
 
 * upgrade Chrome extension output to Manifest V3 ([e99ee86](https://github.com/ineo6/git-master/commit/e99ee86))
-* upgrade frontend and build tooling dependencies
 
 ## [1.17.1](https://github.com/ineo6/git-master/compare/v1.17.0...v1.17.1) (2022-01-24)
 
