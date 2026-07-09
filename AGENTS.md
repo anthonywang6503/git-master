@@ -6,8 +6,8 @@ Git Master 是瀏覽器擴充套件，提供 GitHub、GitLab、Gitee、Gitea、G
 
 核心技術：
 
-- Webpack 4 建置多入口瀏覽器擴充。
-- TypeScript、JavaScript、React 16、Ant Design 4、Less/CSS。
+- Webpack 5 建置多入口瀏覽器擴充。
+- TypeScript 6、JavaScript、React 19、Ant Design 6、Less/CSS。
 - `webextension-polyfill-ts` 提供 WebExtension API 型別與 Promise 介面。
 - Chrome/Opera 輸出 Manifest V3；Firefox 輸出 Manifest V2。
 
@@ -24,7 +24,7 @@ Git Master 是瀏覽器擴充套件，提供 GitHub、GitLab、Gitee、Gitea、G
 
 ## 設定指令
 
-優先使用專案既有 Node/pnpm 工具鏈。`package.json` 宣告 Node `>=10`，並透過 `packageManager` 指定 pnpm。
+優先使用專案既有 Node/pnpm 工具鏈。`package.json` 透過 `packageManager` 指定 pnpm 11。
 
 一般安裝：
 
@@ -32,16 +32,16 @@ Git Master 是瀏覽器擴充套件，提供 GitHub、GitLab、Gitee、Gitea、G
 pnpm install
 ```
 
-若 TypeScript 4.6 因新版 `@types/node` 解析失敗，只調整本機 `node_modules`，不要改 `package.json` 或 `pnpm-lock.yaml`：
+若相依安裝或建置失敗，先確認目前 `package.json`、`pnpm-lock.yaml` 與本機 pnpm 版本一致，不要只因本機快取問題手動改 lockfile：
 
 ```bash
-pnpm add -D @types/node@16.11.7
+pnpm install
 ```
 
-pre-commit hook 需要 `magic-lint` 能找到 `prettier` 與 `lint-staged`。若本機安裝不完整，補齊本機套件即可：
+需要檢查 TypeScript 型別時使用：
 
 ```bash
-pnpm add -D prettier@1.19.1 lint-staged@10.0.8
+pnpm exec tsc --noEmit --pretty false
 ```
 
 ## 開發工作流程
@@ -110,9 +110,10 @@ pnpm run lint
 
 注意：目前 full lint 基線不是乾淨的，會回報既有 TypeScript 規則錯誤。除非任務明確要求清理 lint，請不要順手修正無關檔案；針對你修改的原始碼，依 pre-commit hook 或目標檔案的 lint 結果處理即可。
 
-建置驗證：
+建置與型別驗證：
 
 ```bash
+pnpm exec tsc --noEmit --pretty false
 pnpm run build:chrome
 pnpm run build:firefox
 ```
@@ -135,7 +136,7 @@ node -e "const m=require('./extension/chrome/manifest.json'); console.log(m.vers
 ## 程式碼風格
 
 - 依現有檔案風格做精準修改，不做無關重構。
-- TypeScript / TSX 使用 `ts-loader` 與 `babel-loader`，路徑別名 `@/*` 對應 `src/*`。
+- TypeScript / TSX 使用 Babel TypeScript preset 處理，路徑別名 `@/*` 對應 `src/*`。
 - ESLint 設定在 `.eslintrc.json`，基底為 `magic`、`magic/react`、`magic/typescript`。
 - Prettier 設定在 `.prettierrc.js`，主要規則包含單引號、`printWidth: 150`、`trailingComma: 'es5'`。
 - 不要手動修改 `extension/` 的建置產物；修改來源後重新建置。
@@ -157,13 +158,17 @@ node -e "const m=require('./extension/chrome/manifest.json'); console.log(m.vers
 - 需要同時支援 MV2/MV3 的 action API 時，使用 `src/common/extension-action.ts`。
 - Chrome MV3 對 `chrome.storage.local.get/set/remove` 有 StorageArea brand check；不要把原生方法拆出來保存後再呼叫。
 - Manifest CSP 不可加入遠端 script；Chrome MV3 extension pages 目前使用 `script-src 'self'; object-src 'self'`。
+- React 入口使用 `react-dom/client` 的 `createRoot`；不要再新增 `ReactDOM.render`。
+- Ant Design Modal 使用新版 `open` prop；不要再使用舊版 `visible` prop。
+- jQuery 4 不保證提供舊版 plugin 依賴的內部 API；修改 `jquery.pjax`、`jstree` 或 toast 相關程式時，需確認不依賴頁面上的 `window.jQuery`，並維持 `webpack.config.js` 的 `jquery` alias 讓外掛共用同一份 jQuery。
 
 ## 提交與 PR 指南
 
 - 使用 Conventional Commits，例如 `feat(manifest): 升級 Chrome 擴充至 Manifest V3`。
-- 提交前至少檢查目標瀏覽器建置：
+- 提交前至少檢查型別與目標瀏覽器建置：
 
 ```bash
+pnpm exec tsc --noEmit --pretty false
 pnpm run build:chrome
 ```
 
@@ -173,7 +178,7 @@ pnpm run build:chrome
 pnpm run build:firefox
 ```
 
-- 若修改 TypeScript/JavaScript 原始碼，讓 Husky pre-commit hook 執行 `magic-lint` / lint-staged，並修正 hook 指出的相關檔案問題。不要用 `--no-verify` 跳過 hook，除非使用者明確要求。
+- 若修改 TypeScript/JavaScript 原始碼，讓 Husky pre-commit hook 執行專案設定的檢查，並修正 hook 指出的相關檔案問題。不要用 `--no-verify` 跳過 hook，除非使用者明確要求。
 
 ## CI/CD 與發布
 
@@ -192,6 +197,9 @@ pnpm run build:firefox
 ## 常見陷阱
 
 - `pnpm-lock.yaml` 是相依版本來源；不要只因本機安裝問題大幅重寫 lockfile。
-- 新版 `@types/node` 可能讓 TypeScript 4.6 build 失敗；只修本機 `node_modules` 即可。
+- TypeScript 6 對部分舊 compiler options 與 side-effect style imports 較嚴格；更新設定時同步檢查 `tsconfig.json` 與 `typings/custom-typings.d.ts`。
+- React 19 移除了舊式 `ReactDOM.render`；extension page 入口需使用 `createRoot`。
+- Ant Design 6 的 `Modal` 使用 `open` 控制顯示狀態。
+- jQuery 4 會暴露舊 jQuery plugin 相容性問題；`jquery.pjax`、`jstree` 與 toast 初始化都要避免假設舊版全域 jQuery 或 `$.event.props` 一定存在。
 - `clean-webpack-plugin` 會清掉目標 browser 的 `extension/<browser>` 與 archive；不要並行跑不同 browser build。
 - 重新載入 Chrome 擴充後，已注入的頁面仍可能使用舊 content script，需重新整理頁面。

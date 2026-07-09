@@ -31,6 +31,7 @@ English | [简体中文](./README.zh-CN.md)
 - Current version: `1.18.0`
 - Chrome builds use Manifest V3 and require Chrome 88 or newer.
 - Firefox builds continue to use Manifest V2.
+- Development stack uses Webpack 5, TypeScript 6, React 19, Ant Design 6, and jQuery 4 compatibility shims for legacy plugins.
 - Local build outputs are written to `extension/chrome`, `extension/firefox`, and browser-specific archive files under `extension/`.
 
 ## Usage

@@ -484,7 +484,7 @@
 
         // Force reflow/relayout before the browser tries to restore the
         // scroll position.
-        container[0].offsetHeight; // eslint-disable-line no-unused-expressions
+        container[0].offsetHeight;
       } else {
         locationReplace(location.href);
       }
@@ -881,9 +881,9 @@
 
   // Add the state property to jQuery's event object so we can use it in
   // $(window).bind('popstate')
-  if ($.event.props && $.inArray('state', $.event.props) < 0) {
+  if ($.event && $.event.props && $.inArray('state', $.event.props) < 0) {
     $.event.props.push('state');
-  } else if (!('state' in $.Event.prototype)) {
+  } else if ($.event && $.event.addProp && !('state' in $.Event.prototype)) {
     $.event.addProp('state');
   }
 

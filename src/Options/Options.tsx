@@ -267,7 +267,7 @@ class Options extends React.Component<any, OptionsState> {
             </SectionOption>
           </Section>
         </form>
-        <Modal width={900} centered visible={visible} onOk={this.showGuide} onCancel={this.handleCancel} footer={null}>
+        <Modal width={900} centered open={visible} onOk={this.showGuide} onCancel={this.handleCancel} footer={null}>
           <img width="100%" src={browser.i18n.getMessage('guide_gif_url')} alt="" />
         </Modal>
       </div>

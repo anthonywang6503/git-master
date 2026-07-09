@@ -1,7 +1,13 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+import { createRoot } from 'react-dom/client';
 
 import Popup from './Popup';
 import './index.less';
 
-ReactDOM.render(<Popup />, document.getElementById('popup-root'));
+const root = document.getElementById('popup-root');
+
+if (!root) {
+  throw new Error('Missing popup-root element');
+}
+
+createRoot(root).render(<Popup />);

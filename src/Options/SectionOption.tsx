@@ -9,10 +9,10 @@ interface SectionOptionProps {
   title?: React.ReactNode;
   description?: React.ReactNode;
   layout?: SectionOptionLayout;
+  children?: React.ReactNode;
 }
 
-interface SectionOptionState {
-}
+interface SectionOptionState {}
 
 class SectionOption extends React.Component<SectionOptionProps, SectionOptionState> {
   state = {};
@@ -24,23 +24,16 @@ class SectionOption extends React.Component<SectionOptionProps, SectionOptionSta
 
     return (
       <div
-        className={
-          classNames(
-            `${prefixCls}-option`,
-            {
-              [`${prefixCls}-option-${layout}`]: true,
-              [`${prefixCls}-option-hasDesc`]: description,
-            },
-          )
-        }
+        className={classNames(`${prefixCls}-option`, {
+          [`${prefixCls}-option-${layout}`]: true,
+          [`${prefixCls}-option-hasDesc`]: description,
+        })}
       >
         <div className="label">
           {title}
           <div className="desc">{description}</div>
         </div>
-        <div className="action-area">
-          {children}
-        </div>
+        <div className="action-area">{children}</div>
       </div>
     );
   }

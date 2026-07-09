@@ -8,7 +8,6 @@ const WriteWebpackPlugin = require('write-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const ExtensionReloader = require('webpack-extension-reloader');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const { argv } = require('yargs');
 const wextManifest = require('./scripts/wext-manifest');
 const manifestInput = require('./src/manifest');
 
@@ -36,8 +35,7 @@ const extensionReloaderPlugin =
       };
 
 const analyzerPlugin = function() {
-  if (nodeEnv === 'production' && !!argv.analyzer) {
-    // eslint-disable-next-line global-require
+  if (nodeEnv === 'production' && process.argv.includes('--analyzer')) {
     const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
     return new BundleAnalyzerPlugin({
       analyzerPort: 9191,
@@ -105,6 +103,7 @@ module.exports = {
       'webextension-polyfill-ts': path.resolve(path.join(__dirname, 'node_modules', 'webextension-polyfill-ts')),
       'webextension-polyfill': path.resolve(path.join(__dirname, './src/common/libs/webextension-polyfill.js')),
       'webextension-polyfill-origin': path.resolve(path.join(__dirname, 'node_modules', 'webextension-polyfill')),
+      jquery: path.resolve(path.join(__dirname, 'node_modules', 'jquery')),
       key: path.resolve(path.join(__dirname, './src/common/libs/keymaster.js')),
       '@': path.resolve(__dirname, 'src'),
     },
@@ -117,9 +116,6 @@ module.exports = {
         use: [
           {
             loader: 'babel-loader',
-          },
-          {
-            loader: 'ts-loader',
           },
         ],
         exclude: /node_modules/,
@@ -148,9 +144,9 @@ module.exports = {
           {
             loader: 'postcss-loader', // For autoprefixer
             options: {
-              ident: 'postcss',
-              // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
-              plugins: [require('autoprefixer')()],
+              postcssOptions: {
+                plugins: [require('autoprefixer')()],
+              },
             },
           },
         ],
@@ -170,17 +166,19 @@ module.exports = {
           {
             loader: 'postcss-loader', // For autoprefixer
             options: {
-              ident: 'postcss',
-              // eslint-disable-next-line global-require, @typescript-eslint/no-var-requires
-              plugins: [require('autoprefixer')()],
+              postcssOptions: {
+                plugins: [require('autoprefixer')()],
+              },
             },
           },
           'less-loader',
           {
             loader: 'less-loader',
             options: {
-              javascriptEnabled: true,
-              modifyVars: getLessVar(),
+              lessOptions: {
+                javascriptEnabled: true,
+                modifyVars: getLessVar(),
+              },
             },
           },
         ],
@@ -241,32 +239,34 @@ module.exports = {
     // write css file(s) to build folder
     new MiniCssExtractPlugin({ filename: 'css/[name].css' }),
     // copy static assets
-    new CopyWebpackPlugin([
-      {
-        from: 'src/assets',
-        to: 'assets',
-      },
-      {
-        from: 'views/inject.js',
-        to: 'inject.js',
-      },
-      {
-        from: 'node_modules/@ineo6/file-icons/lib/fonts',
-        to: 'fonts',
-      },
-      {
-        from: 'views/libs/fonts/mastericons.woff2',
-        to: 'fonts/mastericons.woff2',
-      },
-      {
-        from: 'views/_locales',
-        to: '_locales',
-      },
-      {
-        from: 'views/assets',
-        to: 'assets',
-      },
-    ]),
+    new CopyWebpackPlugin({
+      patterns: [
+        {
+          from: 'src/assets',
+          to: 'assets',
+        },
+        {
+          from: 'views/inject.js',
+          to: 'inject.js',
+        },
+        {
+          from: 'node_modules/@ineo6/file-icons/lib/fonts',
+          to: 'fonts',
+        },
+        {
+          from: 'views/libs/fonts/mastericons.woff2',
+          to: 'fonts/mastericons.woff2',
+        },
+        {
+          from: 'views/_locales',
+          to: '_locales',
+        },
+        {
+          from: 'views/assets',
+          to: 'assets',
+        },
+      ],
+    }),
     // write manifest.json
     new WriteWebpackPlugin([
       {
@@ -282,7 +282,6 @@ module.exports = {
   optimization: {
     minimizer: [
       new TerserPlugin({
-        cache: true,
         parallel: true,
       }),
       new ZipPlugin({

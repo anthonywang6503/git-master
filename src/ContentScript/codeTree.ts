@@ -3,7 +3,7 @@ import { browser } from 'webextension-polyfill-ts';
 import { ADDON_CLASS, DICT, EVENT, PINNED_CLASS, SHOW_CLASS, STORE } from '@/common/core.constants';
 import { whichSite } from '@/ContentScript/util';
 import tippy from 'tippy.js';
-import compareVersions from 'compare-versions';
+import { compareVersions } from 'compare-versions';
 
 import gitMaster from '../common/core.api';
 import TreeView from '../common/view.tree';
@@ -25,7 +25,6 @@ import 'tippy.js/themes/light.css';
 async function createAdapter() {
   const siteType = await whichSite();
 
-  // eslint-disable-next-line default-case
   switch (siteType) {
     case DICT.GITHUB:
       return new GitHub();
@@ -214,7 +213,6 @@ class CodeTree {
 
     for (const view of [this.treeView, this.errorView, optsView]) {
       $(view)
-        // eslint-disable-next-line no-loop-func
         .on(EVENT.VIEW_READY, async function() {
           // eslint-disable-next-line @typescript-eslint/no-invalid-this
           if (this !== optsView) {
@@ -315,7 +313,6 @@ class CodeTree {
     const self = this;
     for (const view of [this.treeView, this.errorView, optsView]) {
       $(view)
-        // eslint-disable-next-line no-loop-func
         .on(EVENT.VIEW_READY, async function() {
           // eslint-disable-next-line @typescript-eslint/no-invalid-this
           if (this !== optsView) {
@@ -432,7 +429,6 @@ class CodeTree {
     Object.keys(changes).forEach(storeKey => {
       const [oldValue, newValue] = changes[storeKey];
 
-      // eslint-disable-next-line default-case
       switch (storeKey) {
         case STORE.GITHUB_TOKEN:
         case STORE.GITLAB_TOKEN:

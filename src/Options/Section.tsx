@@ -4,10 +4,10 @@ import './section.less';
 
 interface SectionProps {
   title?: React.ReactNode;
+  children?: React.ReactNode;
 }
 
-interface SectionState {
-}
+interface SectionState {}
 
 class Section extends React.Component<SectionProps, SectionState> {
   render() {
@@ -16,9 +16,7 @@ class Section extends React.Component<SectionProps, SectionState> {
     return (
       <div className="section">
         <div className="section-title">{title}</div>
-        <div className="section-content">
-          {children}
-        </div>
+        <div className="section-content">{children}</div>
       </div>
     );
   }
