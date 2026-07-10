@@ -1,3 +1,10 @@
+## [1.18.3](https://github.com/ineo6/git-master/compare/v1.18.2...v1.18.3) (2026-07-10)
+
+
+### Bug Fixes
+
+* keep the extension loaded when navigating files from the Gitea code tree ([6d92d7d](https://github.com/ineo6/git-master/commit/6d92d7d))
+
 ## [1.18.2](https://github.com/ineo6/git-master/compare/v1.18.1...v1.18.2) (2026-07-09)
 
 
