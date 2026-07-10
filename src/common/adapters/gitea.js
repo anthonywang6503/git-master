@@ -8,6 +8,7 @@ const GH_CONTAINERS = '.full>.page-content';
 const GH_HEADER = '.full>.main';
 const GH_FOOTER = 'footer > .container';
 const GH_MAX_HUGE_REPOS_SIZE = 50;
+const GITEA_VIEW_CONTENT = '.repo-view-content';
 
 const GH_RESERVED_USER_NAMES = [
   'about',
@@ -52,7 +53,7 @@ const GH_RESERVED_REPO_NAMES = ['followers', 'following', 'repositories'];
 
 class Gitea extends PjaxAdapter {
   constructor() {
-    super();
+    super(GITEA_VIEW_CONTENT);
   }
 
   detect = giteaDetect;
@@ -68,8 +69,7 @@ class Gitea extends PjaxAdapter {
     // Note that couldn't do this in response to URL change, since new DOM via pjax might not be ready.
     const diffModeObserver = new window.MutationObserver(mutations => {
       mutations.forEach(mutation => {
-        // eslint-disable-next-line no-bitwise
-        if (~mutation.oldValue.indexOf('split-diff') || ~mutation.target.className.indexOf('split-diff')) {
+        if (mutation.oldValue.indexOf('split-diff') !== -1 || mutation.target.className.indexOf('split-diff') !== -1) {
           return $(document).trigger(EVENT.LAYOUT_CHANGE);
         }
       });
@@ -120,6 +120,7 @@ class Gitea extends PjaxAdapter {
   }
 
   // @override
+  // eslint-disable-next-line max-params
   updateLayout(sidebarPinned, sidebarVisible, sidebarWidth, isSidebarLeft) {
     const $header = $(GH_HEADER);
     const $footer = $(GH_FOOTER);
@@ -140,9 +141,10 @@ class Gitea extends PjaxAdapter {
     }
   }
 
+  // eslint-disable-next-line complexity
   async getRepoData(currentRepo, token, cb) {
     // (username)/(reponame)[/(type)][/(typeId)]
-    // eslint-disable-next-line no-useless-escape
+
     const match = window.location.pathname.match(/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/);
 
     const username = match[1];
@@ -152,7 +154,7 @@ class Gitea extends PjaxAdapter {
 
     const isPR = type === 'pulls';
 
-    if (~GH_RESERVED_USER_NAMES.indexOf(username) || ~GH_RESERVED_REPO_NAMES.indexOf(reponame)) {
+    if (GH_RESERVED_USER_NAMES.includes(username) || GH_RESERVED_REPO_NAMES.includes(reponame)) {
       return cb();
     }
 
@@ -171,10 +173,10 @@ class Gitea extends PjaxAdapter {
       // Use target branch in a PR page
       (isPR
         ? (
-          $('.commit-ref')
-            .not('.head-ref')
-            .attr('title') || ':'
-        ).match(/:(.*)/)[1]
+            $('.commit-ref')
+              .not('.head-ref')
+              .attr('title') || ':'
+          ).match(/:(.*)/)[1]
         : null) ||
       // Reuse last selected branch if exist
       (currentRepo.username === username && currentRepo.reponame === reponame && currentRepo.branch) ||
@@ -204,7 +206,7 @@ class Gitea extends PjaxAdapter {
         },
         (err, data) => {
           if (err) return cb(err);
-          // eslint-disable-next-line no-multi-assign
+
           repo.branch = this._defaultBranch[username + '/' + reponame] = data.default_branch || 'master';
           cb(null, repo);
         }
@@ -252,17 +254,44 @@ class Gitea extends PjaxAdapter {
   }
 
   // @override
-  selectFile(path) {
-    window.location.href = path;
+  async selectFile(path) {
+    const viewContent = document.querySelector(GITEA_VIEW_CONTENT);
+
+    if (!viewContent) {
+      window.location.href = path;
+      return;
+    }
+
+    const url = new URL(path, window.location.origin);
+    url.searchParams.set('only_content', 'true');
+
+    try {
+      const response = await fetch(url.href, { credentials: 'include' });
+      if (!response.ok || response.redirected) throw new Error(response.statusText);
+
+      const content = await response.text();
+
+      window.history.pushState({ url: path }, '', path);
+      viewContent.innerHTML = content;
+
+      const viewContentData = viewContent.querySelector('.repo-view-content-data');
+      if (viewContentData) {
+        const title = viewContentData.getAttribute('data-document-title');
+        const commonTitle = viewContentData.getAttribute('data-document-title-common');
+        document.title = `${title} - ${commonTitle}`;
+      }
+    } catch {
+      window.location.href = path;
+    }
   }
 
   // @override
+  // eslint-disable-next-line max-params
   getItemHref(repo, type, encodedPath, encodedBranch) {
     return `/${repo.username}/${repo.reponame}/src/branch/${encodedBranch}/${encodedPath}`;
   }
 
   get isOnPRPage() {
-    // eslint-disable-next-line no-useless-escape
     const match = window.location.pathname.match(/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/);
 
     if (!match) return false;
@@ -326,14 +355,10 @@ class Gitea extends PjaxAdapter {
           const split = folderPath.split('/');
 
           // Aggregate metadata for ancestor folders
-          split.reduce((path, curr) => {
-            if (path.length) {
-              path = `${path}/${curr}`;
-            } else {
-              path = `${curr}`;
-            }
+          split.reduce((parentPath, curr) => {
+            const path = parentPath ? `${parentPath}/${curr}` : curr;
 
-            if (diffMap[path] == null) {
+            if (diffMap[path] === undefined) {
               diffMap[path] = {
                 type: 'tree',
                 filename: path,
@@ -483,7 +508,6 @@ class Gitea extends PjaxAdapter {
                 hugeRepos[repo] = new Date().getTime();
                 await extStore.set(STORE.HUGE_REPOS, hugeRepos);
               }
-              // eslint-disable-next-line no-empty
             } catch (ignored) {
             } finally {
               await this._handleError(cfg, { status: 206 }, cb);
