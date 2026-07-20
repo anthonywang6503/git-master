@@ -12,11 +12,8 @@ import './github.less';
 // Therefore, the below selector uses many path but only points to the same <main> element
 const GH_PJAX_CONTAINER_SEL = '#js-repo-pjax-container, div[itemtype="http://schema.org/SoftwareSourceCode"] main, [data-pjax-container]';
 
-const GH_CONTAINERS = '.pagehead > nav, .container, .container-lg, .container-xl, .container-responsive';
 const GH_HEADER = '.js-header-wrapper > header';
 const GH_MAX_HUGE_REPOS_SIZE = 50;
-const GH_HIDDEN_RESPONSIVE_CLASS = '.d-none';
-const GH_RESPONSIVE_BREAKPOINT = 1010;
 
 const GH_RESERVED_USER_NAMES = [
   'about',
@@ -71,13 +68,15 @@ class GitHub extends PjaxAdapter {
 
     super.init($sidebar);
 
+    // GitHub uses soft navigation when switching between repository files and directories.
+    $(document).on('soft-nav:end', () => $(document).trigger(EVENT.LOC_CHANGE));
+
     // Fix #151 by detecting when page layout is updated.
     // In this case, split-diff page has a wider layout, so need to recompute margin.
     // Note that couldn't do this in response to URL change, since new DOM via pjax might not be ready.
     const diffModeObserver = new window.MutationObserver(mutations => {
       mutations.forEach(mutation => {
-        // eslint-disable-next-line no-bitwise
-        if (~mutation.oldValue.indexOf('split-diff') || ~mutation.target.className.indexOf('split-diff')) {
+        if (mutation.oldValue.indexOf('split-diff') !== -1 || mutation.target.className.indexOf('split-diff') !== -1) {
           return $(document).trigger(EVENT.LAYOUT_CHANGE);
         }
       });
@@ -128,12 +127,9 @@ class GitHub extends PjaxAdapter {
   }
 
   // @override
+  // eslint-disable-next-line max-params
   updateLayout(sidebarPinned, sidebarVisible, sidebarWidth, isSidebarLeft) {
-    const SPACING = 10;
     const $header = $(GH_HEADER);
-    const $containers = $('html').width() <= GH_RESPONSIVE_BREAKPOINT ? $(GH_CONTAINERS).not(GH_HIDDEN_RESPONSIVE_CLASS) : $(GH_CONTAINERS);
-
-    const autoMarginLeft = ($(document).width() - $containers.width()) / 2;
     const shouldPushEverything = sidebarPinned && sidebarVisible;
 
     const direction = isSidebarLeft ? 'left' : 'right';
@@ -143,8 +139,6 @@ class GitHub extends PjaxAdapter {
         [`margin-${direction}`]: sidebarWidth,
         [`margin-${direction === 'left' ? 'right' : 'left'}`]: '',
       });
-
-      // $header.attr('style', `padding-left: ${sidebarWidth + SPACING - autoMarginLeft}px !important`);
     } else {
       $('html').css({
         [`margin-${direction}`]: '',
@@ -155,10 +149,10 @@ class GitHub extends PjaxAdapter {
     }
   }
 
+  // eslint-disable-next-line complexity
   async getRepoData(currentRepo, token, cb) {
     // (username)/(reponame)[/(type)][/(typeId)]
-    // eslint-disable-next-line no-useless-escape
-    const match = window.location.pathname.match(/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/);
+    const match = window.location.pathname.match(/([^/]+)\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?/);
 
     const username = match[1];
     const reponame = match[2];
@@ -168,8 +162,7 @@ class GitHub extends PjaxAdapter {
     const isPR = type === 'pull';
 
     // Not a repository, skip
-    // eslint-disable-next-line no-bitwise
-    if (~GH_RESERVED_USER_NAMES.indexOf(username) || ~GH_RESERVED_REPO_NAMES.indexOf(reponame)) {
+    if (GH_RESERVED_USER_NAMES.includes(username) || GH_RESERVED_REPO_NAMES.includes(reponame)) {
       return cb();
     }
 
@@ -209,10 +202,10 @@ class GitHub extends PjaxAdapter {
       // Use target branch in a PR page
       (isPR
         ? (
-          $('.commit-ref')
-            .not('.head-ref')
-            .attr('title') || ':'
-        ).match(/:(.*)/)[1]
+            $('.commit-ref')
+              .not('.head-ref')
+              .attr('title') || ':'
+          ).match(/:(.*)/)[1]
         : null) ||
       // Reuse last selected branch if exist
       (currentRepo.username === username && currentRepo.reponame === reponame && currentRepo.branch) ||
@@ -242,7 +235,7 @@ class GitHub extends PjaxAdapter {
         },
         (err, data) => {
           if (err) return cb(err);
-          // eslint-disable-next-line no-multi-assign
+
           repo.branch = this._defaultBranch[username + '/' + reponame] = data.default_branch || 'master';
           cb(null, repo);
         }
@@ -290,8 +283,7 @@ class GitHub extends PjaxAdapter {
   }
 
   get isOnPRPage() {
-    // eslint-disable-next-line no-useless-escape
-    const match = window.location.pathname.match(/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/);
+    const match = window.location.pathname.match(/([^/]+)\/([^/]+)(?:\/([^/]+))?(?:\/([^/]+))?/);
 
     if (!match) return false;
 
@@ -358,14 +350,10 @@ class GitHub extends PjaxAdapter {
           const split = folderPath.split('/');
 
           // Aggregate metadata for ancestor folders
-          split.reduce((path, curr) => {
-            if (path.length) {
-              path = `${path}/${curr}`;
-            } else {
-              path = `${curr}`;
-            }
+          split.reduce((parentPath, curr) => {
+            const path = parentPath ? `${parentPath}/${curr}` : curr;
 
-            if (diffMap[path] == null) {
+            if (diffMap[path] === undefined) {
               diffMap[path] = {
                 type: 'tree',
                 filename: path,
@@ -515,7 +503,6 @@ class GitHub extends PjaxAdapter {
                 hugeRepos[repo] = new Date().getTime();
                 await extStore.set(STORE.HUGE_REPOS, hugeRepos);
               }
-              // eslint-disable-next-line no-empty
             } catch (ignored) {
             } finally {
               await this._handleError(cfg, { status: 206 }, cb);
