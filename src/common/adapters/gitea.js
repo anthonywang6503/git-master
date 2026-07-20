@@ -8,7 +8,7 @@ const GH_CONTAINERS = '.full>.page-content';
 const GH_HEADER = '.full>.main';
 const GH_FOOTER = 'footer > .container';
 const GH_MAX_HUGE_REPOS_SIZE = 50;
-const GITEA_VIEW_CONTENT = '.repo-view-content';
+const GITEA_VIEW_CONTENT = '.repo-view-content, .repo-home-filelist';
 
 const GH_RESERVED_USER_NAMES = [
   'about',
@@ -63,6 +63,18 @@ class Gitea extends PjaxAdapter {
     repoView && repoView.init();
 
     super.init($sidebar);
+
+    $(document).on('click', '#repo-files-table a[href]', event => {
+      const link = event.currentTarget;
+      const url = new URL(link.href, window.location.href);
+      const openInCurrentPage =
+        event.which === 1 && !event.altKey && !event.shiftKey && !event.ctrlKey && !event.metaKey && !link.target && !link.hasAttribute('download');
+
+      if (openInCurrentPage && url.origin === window.location.origin && url.pathname.includes('/src/branch/')) {
+        event.preventDefault();
+        this.selectFile(url.href);
+      }
+    });
 
     // Fix #151 by detecting when page layout is updated.
     // In this case, split-diff page has a wider layout, so need to recompute margin.
@@ -270,15 +282,19 @@ class Gitea extends PjaxAdapter {
       if (!response.ok || response.redirected) throw new Error(response.statusText);
 
       const content = await response.text();
+      const responseDocument = new DOMParser().parseFromString(content, 'text/html');
+      const nextViewContent = responseDocument.querySelector(GITEA_VIEW_CONTENT);
 
       window.history.pushState({ url: path }, '', path);
-      viewContent.innerHTML = content;
+      viewContent.innerHTML = nextViewContent ? nextViewContent.innerHTML : content;
 
       const viewContentData = viewContent.querySelector('.repo-view-content-data');
       if (viewContentData) {
         const title = viewContentData.getAttribute('data-document-title');
         const commonTitle = viewContentData.getAttribute('data-document-title-common');
         document.title = `${title} - ${commonTitle}`;
+      } else if (responseDocument.title) {
+        document.title = responseDocument.title;
       }
     } catch {
       window.location.href = path;
