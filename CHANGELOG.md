@@ -1,3 +1,11 @@
+## [1.18.4](https://github.com/ineo6/git-master/compare/v1.18.3...v1.18.4) (2026-07-20)
+
+
+### Bug Fixes
+
+* keep Git Master loaded when navigating directories in Gitea ([643224d](https://github.com/ineo6/git-master/commit/643224d))
+* keep the code tree selection in sync during GitHub soft navigation ([0c48e0b](https://github.com/ineo6/git-master/commit/0c48e0b))
+
 ## [1.18.3](https://github.com/ineo6/git-master/compare/v1.18.2...v1.18.3) (2026-07-10)
 
 
